@@ -30,7 +30,9 @@ def train(model, optimizer, subjects_adj,subjects_labels, args):
           model_outputs  = unpad(model_outputs, args.padding)
 
           padded_hr = pad_HR_adj(hr,args.padding)
-          eig_val_hr, U_hr = torch.symeig(padded_hr, eigenvectors=True,upper=True)
+          # eig_val_hr, U_hr = torch.symeig(padded_hr, eigenvectors=True,upper=True) # deprecated
+          eig_val_hr, U_hr = torch.linalg.eigh(hr, UPLO='U')
+        
           
           loss = args.lmbda * criterion(net_outs, start_gcn_outs) + criterion(model.layer.weights,U_hr) + criterion(model_outputs, hr) 
           
