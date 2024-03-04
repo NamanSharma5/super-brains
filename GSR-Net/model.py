@@ -20,9 +20,10 @@ class GSRNet(nn.Module):
 
   def forward(self,lr):
 
-    I = torch.eye(self.lr_dim).type(torch.FloatTensor)
+    I = torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
     A = normalize_adj_torch(lr).type(torch.FloatTensor)
 
+    # net_outs = learnt LR node embeddings , start_gcn_outs = embeddings of U-net after donwsampling
     self.net_outs, self.start_gcn_outs = self.net(A, I)
     
     self.outputs, self.Z = self.layer(A, self.net_outs)
@@ -36,3 +37,4 @@ class GSRNet(nn.Module):
     z[idx]=1
     
     return torch.abs(z), self.net_outs, self.start_gcn_outs, self.outputs
+        #  model_outputs,net_outs,start_gcn_outs (hidden dimension),layer_outs = model(lr)
