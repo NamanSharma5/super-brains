@@ -22,6 +22,13 @@ class GSRNet(nn.Module):
     self.gc4 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.selu)
 
   def forward(self,lr):
+    """
+    Returns
+    model_outputs: final super-resolution
+    net_outs: node embeddings after first U-net
+    start_gcn_outs: node embeddings after first GCN
+    layer_outs: final node embeddings after GSRLayer
+    """
 
     I = torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
     A = normalize_adj_torch(lr).type(torch.FloatTensor)
