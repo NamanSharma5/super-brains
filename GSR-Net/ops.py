@@ -39,10 +39,10 @@ class GraphPool(nn.Module):
 
 class GCN(nn.Module):
 
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim, out_dim, p=0):
         super(GCN, self).__init__()
         self.proj = nn.Linear(in_dim, out_dim)
-        self.drop = nn.Dropout(p=0)
+        self.drop = nn.Dropout(p=p)
 
     def forward(self, A, X):
        
@@ -53,7 +53,7 @@ class GCN(nn.Module):
 
 class GraphUnet(nn.Module):
 
-    def __init__(self, ks, in_dim, out_dim, dim=320):
+    def __init__(self, ks, in_dim, out_dim, dim=320, p=0):
         super(GraphUnet, self).__init__()
         self.ks = ks
        
@@ -66,8 +66,8 @@ class GraphUnet(nn.Module):
         self.unpools = []
         self.l_n = len(ks)
         for i in range(self.l_n):
-            self.down_gcns.append(GCN(dim, dim))
-            self.up_gcns.append(GCN(dim, dim))
+            self.down_gcns.append(GCN(dim, dim, p))
+            self.up_gcns.append(GCN(dim, dim, p))
             self.pools.append(GraphPool(ks[i], dim))
             self.unpools.append(GraphUnpool())
 

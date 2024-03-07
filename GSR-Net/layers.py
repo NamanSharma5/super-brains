@@ -17,6 +17,7 @@ class GSRLayer(nn.Module):
     self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True)
 
   def forward(self,A,X):
+    # print('A shape: ', A.shape, ' X shape: ', X.shape)
     lr = A
     lr_dim = lr.shape[0]
     hr_dim = self.weights.shape[0]
@@ -58,8 +59,8 @@ class GraphConvolution(nn.Module):
         torch.nn.init.xavier_uniform_(self.weight)
 
     def forward(self, input, adj):
-        # input = F.dropout(input, self.dropout, self.training)
+        input = F.dropout(input, self.dropout, self.training)
         support = torch.mm(input, self.weight)
         output = torch.mm(adj, support)
-        # output = self.act(output)
+        output = self.act(output)
         return output
