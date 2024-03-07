@@ -19,9 +19,10 @@ class GSRLayer(nn.Module):
   def forward(self,A,X):
     lr = A
     lr_dim = lr.shape[0]
+    hr_dim = self.weights.shape[0]
     f = X
     eig_val_lr, U_lr = torch.linalg.eigh(lr, UPLO='U') # replaced deprecated lin
-    # U_lr = torch.abs(U_lr)
+    U_lr = torch.abs(U_lr)
     eye_mat = torch.eye(lr_dim).type(torch.FloatTensor)
     s_d = torch.cat((eye_mat,eye_mat),0)
     
@@ -33,7 +34,7 @@ class GSRLayer(nn.Module):
     adj = normalize_adj_torch(self.f_d)
     X = torch.mm(adj, adj.t())
     X = (X + X.t())/2
-    idx = torch.eye(320, dtype=bool)
+    idx = torch.eye(hr_dim, dtype=bool)
     X[idx]=1
     return adj, torch.abs(X)
     
@@ -44,7 +45,7 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0., act=F.relu):
+    def __init__(self, in_features, out_features, dropout=0.3, act=F.leaky_relu):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features

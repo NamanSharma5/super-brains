@@ -24,7 +24,7 @@ class GraphPool(nn.Module):
 
     def forward(self, A, X):
         scores = self.proj(X)
-        # scores = torch.abs(scores)
+        scores = torch.abs(scores)
         scores = torch.squeeze(scores)
         scores = self.sigmoid(scores/100)
         num_nodes = A.shape[0]
@@ -47,7 +47,7 @@ class GCN(nn.Module):
     def forward(self, A, X):
        
         X = self.drop(X)
-        # X = torch.matmul(A, X)
+        X = torch.matmul(A, X)
         X = self.proj(X)
         return X
 

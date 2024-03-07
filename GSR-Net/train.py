@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from preprocessing import *
 from model import *
 
-criterion = nn.MSELoss()
+criterion = nn.L1Loss()
 
 def train(model, optimizer, subjects_adj,subjects_labels, args):
   
@@ -87,12 +87,12 @@ def test(model, test_adj, test_labels,args):
       
       error = criterion(preds, hr)
       g_t.append(hr.flatten())
-      print(error.item())
+      # print(error.item())
       test_error.append(error.item())
      
       i+=1
 
-  print ("Test error MSE: ", np.mean(test_error))
+  print ("Test error MAE: ", np.mean(test_error))
   
   #plot histograms
 #   preds_list = [val for sublist in preds_list for val in sublist]
