@@ -93,6 +93,7 @@ def test(model, test_adj, test_labels,args):
       i+=1
 
   print ("Test error MAE: ", np.mean(test_error))
+  return np.mean(test_error)
   
   #plot histograms
 #   preds_list = [val for sublist in preds_list for val in sublist]
