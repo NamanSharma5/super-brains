@@ -70,6 +70,7 @@ def test(model, test_adj, test_labels,args):
       np.fill_diagonal(hr,1)
       hr = torch.from_numpy(hr).type(torch.FloatTensor)
       preds,a,b,c = model(lr)
+      # a,b,preds = model(lr)
       preds = unpad(preds, args.padding)
 
       #plot residuals
