@@ -1,26 +1,26 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from layers import *
 
 
 class GraphUnpool(nn.Module):
 
-    def __init__(self, device=torch.device('cpu')):
+    def __init__(self):
         super(GraphUnpool, self).__init__()
-        self.device = device
 
     def forward(self, A, X, idx):
-        new_X = torch.zeros([A.shape[0], X.shape[1]]).to(self.device)
+        new_X = torch.zeros([A.shape[0], X.shape[1]])
         new_X[idx] = X
         return A, new_X
 
     
 class GraphPool(nn.Module):
 
-    def __init__(self, k, in_dim, device=torch.device('cpu')):
+    def __init__(self, k, in_dim):
         super(GraphPool, self).__init__()
         self.k = k
-        self.proj = nn.Linear(in_dim, 1, device=device)
+        self.proj = nn.Linear(in_dim, 1)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, A, X):
@@ -40,9 +40,9 @@ class GraphPool(nn.Module):
 
 class GCN(nn.Module):
 
-    def __init__(self, in_dim, out_dim, p=0, device=torch.device('cpu')):
+    def __init__(self, in_dim, out_dim, p=0):
         super(GCN, self).__init__()
-        self.proj = nn.Linear(in_dim, out_dim, device=device)
+        self.proj = nn.Linear(in_dim, out_dim)
         self.drop = nn.Dropout(p=p)
 
     def forward(self, A, X):
@@ -53,22 +53,22 @@ class GCN(nn.Module):
 
 class GraphUnet(nn.Module):
 
-    def __init__(self, ks, in_dim, out_dim, dim=320, p=0, device=torch.device('cpu')):
+    def __init__(self, ks, in_dim, out_dim, dim=320, p=0):
         super(GraphUnet, self).__init__()
         self.ks = ks
        
-        self.start_gcn = GCN(in_dim, dim, p, device)
-        self.bottom_gcn = GCN(dim, dim, p, device)
-        self.end_gcn = GCN(2*dim, out_dim, p, device)
+        self.start_gcn = GINConvolution(in_dim, dim)
+        self.bottom_gcn = GINConvolution(dim, dim)
+        self.end_gcn = GINConvolution(2*dim, out_dim)
         self.down_gcns = []
         self.up_gcns = []
         self.pools = []
         self.unpools = []
         self.l_n = len(ks)
         for i in range(self.l_n):
-            self.down_gcns.append(GCN(dim, dim, p, device))
-            self.up_gcns.append(GCN(dim, dim, p, device))
-            self.pools.append(GraphPool(ks[i], dim, device))
+            self.down_gcns.append(GINConvolution(dim, dim, p))
+            self.up_gcns.append(GINConvolution(dim, dim, p))
+            self.pools.append(GraphPool(ks[i], dim))
             self.unpools.append(GraphUnpool())
 
     def forward(self, A, X):

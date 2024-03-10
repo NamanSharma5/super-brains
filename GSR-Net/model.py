@@ -16,18 +16,17 @@ class GSRNet(nn.Module):
     self.hidden_dim = args.hidden_dim
     self.layer = GSRLayer(self.hr_dim)
     self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p)
-    self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p)
-    self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc2 = GraphConvolution(self.hidden_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc3 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
+    self.gc1 = GATLayer(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
+    self.gc2 = GATLayer(self.hidden_dim, self.hidden_dim, args.p, act=F.relu)
+    self.gc3 = GATLayer(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
 
   def forward(self,lr):
 
     # topo = compute_degree_sum(lr)
     # I = torch.diag(topo).type(torch.FloatTensor)
     # torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
-    I = normalize_adj_torch(lr).type(torch.FloatTensor).to(lr.device)
-    A = normalize_adj_torch(lr).type(torch.FloatTensor).to(lr.device)
+    I = normalize_adj_torch(lr).type(torch.FloatTensor)
+    A = normalize_adj_torch(lr).type(torch.FloatTensor)
 
     # net_outs = learnt LR node embeddings , start_gcn_outs = embeddings of U-net after donwsampling
     self.net_outs, self.start_gcn_outs = self.net(A, I)

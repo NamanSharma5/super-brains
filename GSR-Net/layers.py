@@ -10,11 +10,11 @@ from preprocessing import normalize_adj_torch
 
 class GSRLayer(nn.Module):
   
-  def __init__(self,hr_dim, device=torch.device('cpu')):
+  def __init__(self, hr_dim):
     super(GSRLayer, self).__init__()
     
-    self.weights = torch.from_numpy(weight_variable_glorot(hr_dim)).type(torch.FloatTensor).to(device)
-    self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True).to(device)
+    self.weights = torch.from_numpy(weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
+    self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True)
 
   def forward(self,A,X):
     # print('A shape: ', A.shape, ' X shape: ', X.shape)
@@ -46,14 +46,14 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu, device=torch.device('cpu')):
+    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.dropout = dropout
         self.act = act
-        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)).to(device)
-        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)).to(device)
+        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -84,7 +84,7 @@ class GINConvolution(nn.Module):
 
     """
 
-    def __init__(self, in_features, out_features, dropout=0.3, eps=0, act=F.leaky_relu):
+    def __init__(self, in_features, out_features, dropout=0.3, eps=0, act=F.prelu):
         super(GINConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -120,7 +120,7 @@ class GATLayer(nn.Module):
     allowing the model to focus on different parts of the neighborhood
     of each node.
     """
-    def __init__(self, in_features, out_features, activation=None):
+    def __init__(self, in_features, out_features, activation=F.prelu):
         super(GATLayer, self).__init__()
         # Initialize the weights, bias, and attention parameters as
         # trainable parameters
@@ -153,7 +153,7 @@ class GATLayer(nn.Module):
         # 1. Apply linear transform add bias
         H = torch.matmul(input, self.weight) + self.bias
         # init sim matrix
-        S = torch.zeros((N,N), device=input.device)
+        S = torch.zeros((N,N))
         # 2. compute attention scores
         H_expanded = H.repeat(N, 1)  # repeat H [1, 2, 3] ->  [1,2,3,1,2,3] node gets repeated N times
 
@@ -163,11 +163,11 @@ class GATLayer(nn.Module):
         S = torch.matmul(concat_feats, self.phi).view(N, N)
 
         # Compute mask based on adjacency
-        I = torch.eye(N, device=input.device)
+        I = torch.eye(N)
         mask = (adj + I) != 0
 
         # 4 - Apply mask  to the pre-attention matrix
-        S_masked = torch.where(mask, S, torch.tensor(float('-inf'), device=input.device))
+        S_masked = torch.where(mask, S, torch.tensor(float('-inf')))
 
         # 5 compute attention weights using softmax
         attention_weights = F.softmax(S_masked, dim=1)
