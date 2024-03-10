@@ -1,7 +1,7 @@
 #%%
 from lightning.fabric import Fabric, seed_everything
 from torch.utils.data import DataLoader, SubsetRandomSampler
-from dataloaders import train_data, val_data
+from dataloaders import brain_dataset
 from preprocessing import *
 from sklearn.model_selection import KFold
 import argparse
@@ -126,11 +126,11 @@ def main():
     criterion = nn.L1Loss()
 
     for epoch in range(args.epochs):
-        for fold, (train_ids, val_ids) in enumerate(kfold.split(train_data)):
+        for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
             print(f"Working on fold {fold}")
 
-            train_dataloader = DataLoader(train_data, batch_size=1, sampler=SubsetRandomSampler(train_ids))
-            val_dataloader = DataLoader(val_data, batch_size=1, sampler=SubsetRandomSampler(val_ids))
+            train_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(train_ids))
+            val_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
 
             train_loader, val_loader = fabric.setup_dataloaders(train_dataloader, val_dataloader)
 
@@ -142,8 +142,8 @@ def main():
     
     print(f"Running final evalutation")
     fold_losses = []
-    for fold, (train_ids, val_ids) in enumerate(kfold.split(train_data)):
-        val_dataloader = DataLoader(val_data, batch_size=1, sampler=SubsetRandomSampler(val_ids))
+    for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
+        val_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
         val_loader = fabric.setup_dataloaders(val_dataloader)
         model = models[fold]
         fold_losses.append(validate(fabric, model, val_loader, criterion, args))

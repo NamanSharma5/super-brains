@@ -3,8 +3,6 @@ from MatrixVectorizer import *
 import pandas as pd
 import torch
 
-TRAIN_VAL_SPLIT = 0.8
-
 lr_data_path = '../data/lr_train.csv'
 hr_data_path = '../data/hr_train.csv'
 
@@ -15,17 +13,8 @@ np.nan_to_num(lr_data, copy=False)
 hr_data[hr_data < 0] = 0
 np.nan_to_num(hr_data, copy=False)
 
-# Split the data into training and validation sets
-split = int(lr_data.shape[0] * TRAIN_VAL_SPLIT)
-lr_train_data = lr_data[:split]
-hr_train_data = hr_data[:split]
-lr_val_data = lr_data[split:]
-hr_val_data = hr_data[split:]
-
-lr_train_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 160) for row in lr_train_data]))
-hr_train_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 268) for row in hr_train_data]))
-lr_val_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 160) for row in lr_val_data]))
-hr_val_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 268) for row in hr_val_data]))
+lr_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 160) for row in lr_data]))
+hr_data_vectorized = torch.tensor(np.array([MatrixVectorizer.anti_vectorize(row, 268) for row in hr_data]))
 
 
 class NoisyDataset(Dataset):
@@ -55,8 +44,4 @@ class NoisyDataset(Dataset):
 
         return noisy_lr_sample, hr_sample
 
-train_data = NoisyDataset(lr_train_data_vectorized, hr_train_data_vectorized, noise_level=0.5)
-val_data = NoisyDataset(lr_val_data_vectorized, hr_val_data_vectorized, noise_level=0.5)
-
-train_dataloader = DataLoader(train_data, batch_size=1, shuffle=True)
-val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False)
+brain_dataset = NoisyDataset(lr_data_vectorized, hr_data_vectorized, noise_level=0.5)
