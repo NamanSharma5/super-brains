@@ -14,13 +14,11 @@ class GSRNet(nn.Module):
     self.lr_dim = args.lr_dim
     self.hr_dim = args.hr_dim
     self.hidden_dim = args.hidden_dim
-    self.layer = GSRLayer(self.hr_dim, device=args.device)
-    self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p, device=args.device)
-    self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p, device=args.device)
-    self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu, device=args.device)
-    self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu, device=args.device)
-    # self.gc3 = GraphConvolution(self.hidden_dim, self.hidden_dim, args.p, act=F.selu)
-    # self.gc4 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.selu)
+    self.layer = GSRLayer(self.hr_dim)
+    self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p)
+    self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p)
+    self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
+    self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
 
   def forward(self,lr):
 
