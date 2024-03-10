@@ -18,7 +18,8 @@ class GSRNet(nn.Module):
     self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p)
     self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p)
     self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
+    self.gc2 = GraphConvolution(self.hidden_dim, self.hidden_dim, args.p, act=F.relu)
+    self.gc3 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
 
   def forward(self,lr):
 
@@ -32,16 +33,13 @@ class GSRNet(nn.Module):
     self.net_outs, self.start_gcn_outs = self.net(A, I)
     
     self.outputs, self.Z = self.layer(A, self.net_outs)
-    # return self.net_outs, self.start_gcn_outs, self.outputs
-    
-    # self.net_outs2, self.start_gcn_outs2 = self.net2(self.outputs, self.Z)
     
     self.hidden1 = self.gc1(self.Z, self.outputs)
     self.hidden2 = self.gc2(self.hidden1, self.outputs)
-    # self.hidden3 = self.gc3(self.hidden2, self.outputs)
+    self.hidden3 = self.gc3(self.hidden2, self.outputs)
     # self.hidden4 = self.gc4(self.hidden3, self.outputs)
 
-    z = self.hidden2
+    z = self.hidden3
     
     z = (z + z.t())/2
     idx = torch.eye(self.hr_dim, dtype=bool) 
