@@ -24,7 +24,7 @@ class GSRNet(nn.Module):
 
   def forward(self,lr):
 
-    topo = compute_degree_nonzero(lr)
+    topo = compute_degree_sum(lr)
     I = torch.diag(topo).type(torch.FloatTensor)
     # torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
     A = normalize_adj_torch(lr).type(torch.FloatTensor)
