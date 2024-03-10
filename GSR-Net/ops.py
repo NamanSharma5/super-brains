@@ -57,17 +57,17 @@ class GraphUnet(nn.Module):
         super(GraphUnet, self).__init__()
         self.ks = ks
        
-        self.start_gcn = GINConvolution(in_dim, dim)
-        self.bottom_gcn = GINConvolution(dim, dim)
-        self.end_gcn = GINConvolution(2*dim, out_dim)
+        self.start_gcn = GraphConvolution(in_dim, dim, act=F.relu)
+        self.bottom_gcn = GraphConvolution(dim, dim, act=F.relu)
+        self.end_gcn = GraphConvolution(2*dim, out_dim, act=F.relu)
         self.down_gcns = []
         self.up_gcns = []
         self.pools = []
         self.unpools = []
         self.l_n = len(ks)
         for i in range(self.l_n):
-            self.down_gcns.append(GINConvolution(dim, dim, p))
-            self.up_gcns.append(GINConvolution(dim, dim, p))
+            self.down_gcns.append(GraphConvolution(dim, dim, p, act=F.relu))
+            self.up_gcns.append(GraphConvolution(dim, dim, p, act=F.relu))
             self.pools.append(GraphPool(ks[i], dim))
             self.unpools.append(GraphUnpool())
 

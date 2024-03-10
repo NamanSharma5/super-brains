@@ -16,7 +16,7 @@ class GSRLayer(nn.Module):
     self.weights = torch.from_numpy(weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
     self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True)
 
-  def forward(self,A,X):
+  def forward(self, A, X):
     # print('A shape: ', A.shape, ' X shape: ', X.shape)
     lr = A
     lr_dim = lr.shape[0]
@@ -46,7 +46,7 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu):
+    def __init__(self, in_features, out_features, dropout=0.2, act=F.prelu):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
