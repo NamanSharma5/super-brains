@@ -1,6 +1,7 @@
 #%%
 from lightning.fabric import Fabric, seed_everything
-from dataloaders import train_dataloader, val_dataloader
+from torch.utils.data import DataLoader, SubsetRandomSampler
+from dataloaders import train_data, val_data
 from preprocessing import *
 from sklearn.model_selection import KFold
 import argparse
@@ -17,38 +18,36 @@ from typing import Union
 def train(fabric, model, train_loader, optimizer, criterion, args):
     model.train()
 
-    for epoch in range(args.epochs):
-        epoch_loss = []
-        epoch_error = []
-        epoch_topo = []
+    epoch_loss = []
+    epoch_error = []
+    epoch_topo = []
 
-        model.train()
-        for lr, hr in train_loader:      
-            lr = lr.reshape(160, 160)
-            hr = hr.reshape(268, 268)
+    for lr, hr in train_loader:      
+        lr = lr.reshape(160, 160)
+        hr = hr.reshape(268, 268)
 
-            model_outputs,net_outs,start_gcn_outs,layer_outs = model(lr)
-            model_outputs  = unpad(model_outputs, args.padding)
+        model_outputs,net_outs,start_gcn_outs,layer_outs = model(lr)
+        model_outputs  = unpad(model_outputs, args.padding)
 
-            padded_hr = pad_HR_adj(hr,args.padding)
-            eig_val_hr, U_hr = torch.linalg.eigh(padded_hr, UPLO='U')
+        padded_hr = pad_HR_adj(hr,args.padding)
+        eig_val_hr, U_hr = torch.linalg.eigh(padded_hr, UPLO='U')
 
-            loss = args.lmbda * criterion(net_outs, start_gcn_outs) + criterion(model.layer.weights,U_hr) + criterion(model_outputs, hr) 
+        loss = args.lmbda * criterion(net_outs, start_gcn_outs) + criterion(model.layer.weights,U_hr) + criterion(model_outputs, hr) 
 
-            topo = args.lamdba_topo * compute_topological_MAE_loss(hr, model_outputs)
+        topo = args.lamdba_topo * compute_topological_MAE_loss(hr, model_outputs)
 
-            error = criterion(model_outputs, hr)
+        error = criterion(model_outputs, hr)
 
-            optimizer.zero_grad()
-            fabric.backward(loss)
-            optimizer.step()
+        optimizer.zero_grad()
+        fabric.backward(loss)
+        optimizer.step()
 
-            epoch_loss.append(loss.item())
-            epoch_error.append(error.item())
-            epoch_topo.append(topo.item())
+        epoch_loss.append(loss.item())
+        epoch_error.append(error.item())
+        epoch_topo.append(topo.item())
         
-        print("Epoch: ",epoch+1, "Loss: ", np.mean(epoch_loss), "Error: ", np.mean(epoch_error),
-            "Topo: ", np.mean(epoch_topo))
+    print("Loss: ", np.mean(epoch_loss), "Error: ", np.mean(epoch_error),
+        "Topo: ", np.mean(epoch_topo))
 
     
 def validate(fabric, model, val_loader, criterion, args):
@@ -103,23 +102,58 @@ def hyperparameters():
     args.hidden_dim = hidden_dim
     args.padding = padding
     args.p = dropout
+    args.seed = 123
     return args
 
 #%%
 
 def main():
     fabric = Fabric(accelerator='cpu')
+
     fabric.launch()
     args = hyperparameters()
     args.device = fabric.device
     ks = [0.9, 0.7, 0.6, 0.5]
 
-    model = GSRNet(ks, args)
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    seed_everything(args.seed)
+
+    kfold = KFold(n_splits=3, random_state=42, shuffle=True)
+    models = [GSRNet(ks, args) for _ in range(kfold.n_splits)]
+    optimizers = [optim.Adam(model.parameters(), lr=args.lr) for model in models]
+    for i in range(kfold.n_splits):
+        models[i], optimizers[i] = fabric.setup(models[i], optimizers[i])
+
     criterion = nn.L1Loss()
 
-    model, optimizer = fabric.setup(model, optimizer)
-    train_loader, val_loader = fabric.setup_dataloaders(train_dataloader, val_dataloader)
+    for epoch in range(args.epochs):
+        for fold, (train_ids, val_ids) in enumerate(kfold.split(train_data)):
+            print(f"Working on fold {fold}")
+
+            train_dataloader = DataLoader(train_data, batch_size=1, sampler=SubsetRandomSampler(train_ids))
+            val_dataloader = DataLoader(val_data, batch_size=1, sampler=SubsetRandomSampler(val_ids))
+
+            train_loader, val_loader = fabric.setup_dataloaders(train_dataloader, val_dataloader)
+
+            model, optimizer = models[fold], optimizers[fold]
+
+            # train and validate
+            train(fabric, model, train_loader, optimizer, criterion, args)
+            validate(fabric, model, val_loader, criterion, args)
+    
+    print(f"Running final evalutation")
+    fold_losses = []
+    for fold, (train_ids, val_ids) in enumerate(kfold.split(train_data)):
+        val_dataloader = DataLoader(val_data, batch_size=1, sampler=SubsetRandomSampler(val_ids))
+        val_loader = fabric.setup_dataloaders(val_dataloader)
+        model = models[fold]
+        fold_losses.append(validate(fabric, model, val_loader, criterion, args))
+
+    print(fold_losses)
+
+
+
+
+    
 
     train(fabric, model, train_loader, optimizer, criterion, args)
     validate(fabric, model, val_loader, criterion, args)
