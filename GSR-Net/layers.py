@@ -46,7 +46,7 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0.3, act=F.leaky_relu):
+    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
