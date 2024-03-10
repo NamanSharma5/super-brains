@@ -7,7 +7,6 @@ from initializations import *
 from preprocessing import normalize_adj_torch
 
 
-
 class GSRLayer(nn.Module):
   
   def __init__(self,hr_dim):
@@ -84,9 +83,9 @@ class GINConvolution(nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.dropout = dropout
-        self.eps = nn.Parameter(torch.Tensor([eps]))  # eps can be learnable
+        self.eps = nn.Parameter(torch.Tensor([eps]))  # in pytorch docs, eps is not learnable by default - its; a hyperparm
         self.act = act
-        self.linear = nn.Linear(in_features, out_features)  # Linear transformation
+        self.linear = nn.Linear(in_features, out_features)  # final output transformation <- can replace with MLP
         self.reset_parameters()
 
     def reset_parameters(self):
