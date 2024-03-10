@@ -14,11 +14,11 @@ class GSRNet(nn.Module):
     self.lr_dim = args.lr_dim
     self.hr_dim = args.hr_dim
     self.hidden_dim = args.hidden_dim
-    self.layer = GSRLayer(self.hr_dim)
-    self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p)
-    self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p)
-    self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
+    self.layer = GSRLayer(self.hr_dim, device=args.device)
+    self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p, device=args.device)
+    self.net2 = GraphUnet(ks, self.hr_dim, self.hr_dim, self.hr_dim, args.p, device=args.device)
+    self.gc1 = GraphConvolution(self.hr_dim, self.hidden_dim, args.p, act=F.relu, device=args.device)
+    self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.relu, device=args.device)
     # self.gc3 = GraphConvolution(self.hidden_dim, self.hidden_dim, args.p, act=F.selu)
     # self.gc4 = GraphConvolution(self.hidden_dim, self.hr_dim, args.p, act=F.selu)
 
@@ -27,8 +27,8 @@ class GSRNet(nn.Module):
     # topo = compute_degree_sum(lr)
     # I = torch.diag(topo).type(torch.FloatTensor)
     # torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
-    I = normalize_adj_torch(lr).type(torch.FloatTensor)
-    A = normalize_adj_torch(lr).type(torch.FloatTensor)
+    I = normalize_adj_torch(lr).type(torch.FloatTensor).to(lr.device)
+    A = normalize_adj_torch(lr).type(torch.FloatTensor).to(lr.device)
 
     # net_outs = learnt LR node embeddings , start_gcn_outs = embeddings of U-net after donwsampling
     self.net_outs, self.start_gcn_outs = self.net(A, I)

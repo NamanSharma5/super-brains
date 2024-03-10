@@ -58,5 +58,5 @@ class NoisyDataset(Dataset):
 train_data = NoisyDataset(lr_train_data_vectorized, hr_train_data_vectorized, noise_level=0.5)
 val_data = NoisyDataset(lr_val_data_vectorized, hr_val_data_vectorized, noise_level=0.5)
 
-train_loader = DataLoader(train_data, batch_size=1, shuffle=True)
-val_loader = DataLoader(val_data, batch_size=1, shuffle=False)
+train_dataloader = DataLoader(train_data, batch_size=1, shuffle=True)
+val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False)

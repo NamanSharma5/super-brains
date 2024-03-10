@@ -10,11 +10,11 @@ from preprocessing import normalize_adj_torch
 
 class GSRLayer(nn.Module):
   
-  def __init__(self,hr_dim):
+  def __init__(self,hr_dim, device=torch.device('cpu')):
     super(GSRLayer, self).__init__()
     
-    self.weights = torch.from_numpy(weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
-    self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True)
+    self.weights = torch.from_numpy(weight_variable_glorot(hr_dim)).type(torch.FloatTensor).to(device)
+    self.weights = torch.nn.Parameter(data=self.weights, requires_grad = True).to(device)
 
   def forward(self,A,X):
     # print('A shape: ', A.shape, ' X shape: ', X.shape)
@@ -46,14 +46,14 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu):
+    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu, device=torch.device('cpu')):
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.dropout = dropout
         self.act = act
-        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
-        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)).to(device)
+        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)).to(device)
         self.reset_parameters()
 
     def reset_parameters(self):
