@@ -52,15 +52,19 @@ class GraphConvolution(nn.Module):
         self.out_features = out_features
         self.dropout = dropout
         self.act = act
-        self.weight = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
         self.reset_parameters()
 
     def reset_parameters(self):
-        torch.nn.init.xavier_uniform_(self.weight)
+        torch.nn.init.xavier_uniform_(self.weight_self)
+        torch.nn.init.xavier_uniform_(self.weight_ne)
 
     def forward(self, input, adj):
         input = F.dropout(input, self.dropout, self.training)
-        support = torch.mm(input, self.weight)
+        support = torch.mm(input, self.weight_ne)
+        
         output = torch.mm(adj, support)
+        output += torch.mm(input, self.weight_self)
         output = self.act(output)
         return output
