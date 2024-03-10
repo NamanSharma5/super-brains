@@ -4,6 +4,7 @@ from layers import *
 from ops import *
 from preprocessing import normalize_adj_torch
 import torch.nn.functional as F
+from topological import *
 
 class GSRNet(nn.Module):
 
@@ -23,7 +24,9 @@ class GSRNet(nn.Module):
 
   def forward(self,lr):
 
-    I = torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
+    topo = compute_degree_nonzero(lr)
+    I = torch.diag(topo).type(torch.FloatTensor)
+    # torch.eye(self.lr_dim).type(torch.FloatTensor) # LR node embeddings
     A = normalize_adj_torch(lr).type(torch.FloatTensor)
 
     # net_outs = learnt LR node embeddings , start_gcn_outs = embeddings of U-net after donwsampling
