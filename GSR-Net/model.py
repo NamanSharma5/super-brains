@@ -16,9 +16,9 @@ class GSRNet(nn.Module):
     self.hidden_dim = args.hidden_dim
     self.layer = GSRLayer(self.hr_dim)
     self.net = GraphUnet(ks, self.lr_dim, self.hr_dim, self.hr_dim, args.p)
-    self.gc1 = GATLayer(self.hr_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc2 = GATLayer(self.hidden_dim, self.hidden_dim, args.p, act=F.relu)
-    self.gc3 = GATLayer(self.hidden_dim, self.hr_dim, args.p, act=F.relu)
+    self.gc1 = GATLayer(self.hr_dim, self.hidden_dim, act=F.relu)
+    self.gc2 = GATLayer(self.hidden_dim, self.hidden_dim, act=F.relu)
+    self.gc3 = GATLayer(self.hidden_dim, self.hr_dim, act=F.relu)
 
   def forward(self,lr):
 

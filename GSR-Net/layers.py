@@ -60,7 +60,7 @@ class GraphConvolution(nn.Module):
         torch.nn.init.xavier_uniform_(self.weight_self)
         torch.nn.init.xavier_uniform_(self.weight_ne)
 
-    def forward(self, input, adj):
+    def forward(self, adj, input):
         input = F.dropout(input, self.dropout, self.training)
         support = torch.mm(input, self.weight_ne)
         
@@ -84,7 +84,7 @@ class GINConvolution(nn.Module):
 
     """
 
-    def __init__(self, in_features, out_features, dropout=0.3, eps=0, act=F.prelu):
+    def __init__(self, in_features, out_features, dropout=0.3, eps=0, act=F.leaky_relu):
         super(GINConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -98,7 +98,7 @@ class GINConvolution(nn.Module):
         self.linear.reset_parameters()
         nn.init.constant_(self.eps, 0.0)  # Initializing eps to 0
 
-    def forward(self, input, adj):
+    def forward(self, adj, input):
         input = F.dropout(input, self.dropout, self.training)
         # Assuming adj is an adjacency list for neighbors
         # Aggregation step, summing over neighbors
@@ -120,14 +120,14 @@ class GATLayer(nn.Module):
     allowing the model to focus on different parts of the neighborhood
     of each node.
     """
-    def __init__(self, in_features, out_features, activation=F.prelu):
+    def __init__(self, in_features, out_features, act=F.leaky_relu):
         super(GATLayer, self).__init__()
         # Initialize the weights, bias, and attention parameters as
         # trainable parameters
         self.weight = nn.Parameter(torch.FloatTensor(in_features, out_features))
         self.bias = nn.Parameter(torch.zeros(out_features))
         self.phi = nn.Parameter(torch.FloatTensor(2 * out_features, 1))
-        self.activation = activation
+        self.activation = act
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -137,7 +137,7 @@ class GATLayer(nn.Module):
         stdv = 1. / np.sqrt(self.phi.size(1))
         self.phi.data.uniform_(-stdv, stdv)
 
-    def forward(self, input, adj):
+    def forward(self, adj, input):
         """
         Forward pass of the GAT layer.
 
