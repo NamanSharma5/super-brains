@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from layers import *
-from ops import *
 from preprocessing import normalize_adj_torch
 from topological import *
 

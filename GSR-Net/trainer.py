@@ -6,7 +6,7 @@ from preprocessing import *
 from sklearn.model_selection import KFold
 import argparse
 from model import *
-from train import test
+from test import *
 import torch.optim as optim
 import pandas as pd
 from MatrixVectorizer import *
