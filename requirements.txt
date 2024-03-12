@@ -3,6 +3,8 @@ comm==0.2.1
 debugpy==1.8.1
 decorator==5.1.1
 exceptiongroup==1.2.0
+tdqm==4.66.2
+lightning
 executing==2.0.1
 filelock==3.13.1
 fsspec==2024.2.0
