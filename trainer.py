@@ -1,6 +1,7 @@
 #%%
 from typing import Union
 import argparse
+import random
 
 import torch
 import torch.optim as optim
@@ -10,6 +11,7 @@ from lightning.fabric import Fabric, seed_everything
 import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
+import pickle
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from scipy.stats import pearsonr
@@ -20,44 +22,85 @@ from MatrixVectorizer import *
 from dataloaders import brain_dataset
 from preprocessing import *
 from model import *
-from test import *
 
 
-#%%
-def train(model, train_loader, optimizer, criterion, args):
-    model.train()
+def generate_submission_csv(model, args, data_path='./data/lr_test.csv', filename='testset-preds.csv'):
+    lr_test_data = pd.read_csv(data_path, delimiter=',').to_numpy()
+    lr_test_data[lr_test_data < 0] = 0
+    np.nan_to_num(lr_test_data, copy=False)
+    lr_test_data_vectorized = np.array([MatrixVectorizer.anti_vectorize(row, 160) for row in lr_test_data])
 
-    epoch_loss = []
-    epoch_error = []
-    epoch_topo = []
-
-    for lr, hr in train_loader:      
-        lr = lr.reshape(160, 160)
-        hr = hr.reshape(268, 268)
-
-        model_outputs,net_outs,start_gcn_outs,layer_outs = model(lr)
+    model.eval()
+    preds = []
+    for lr in lr_test_data_vectorized:      
+        lr = torch.from_numpy(lr).type(torch.FloatTensor)
+        model_outputs, _, _, _ = model(lr)
         model_outputs  = unpad(model_outputs, args.padding)
+        preds.append(MatrixVectorizer.vectorize(model_outputs.detach().numpy()))
 
-        padded_hr = pad_HR_adj(hr,args.padding)
-        eig_val_hr, U_hr = torch.linalg.eigh(padded_hr, UPLO='U')
+    r = np.hstack(preds)
+    meltedDF = r.flatten()
+    n = meltedDF.shape[0]
+    df = pd.DataFrame({'ID': np.arange(1, n+1),
+                    'Predicted': meltedDF})
+    df.to_csv(filename, index=False)
 
-        loss = args.lmbda * criterion(net_outs, start_gcn_outs) + criterion(model.layer.weights,U_hr) + criterion(model_outputs, hr) 
+def train(model, train_data_loader, optimizer, criterion, args, name='model'): 
+  
+    all_epochs_loss = []
+    all_epochs_error = []
+    all_epochs_topoloss = []
+    no_epochs = args.epochs
 
-        topo = args.lamdba_topo * compute_topological_MAE_loss(hr, model_outputs)
+    for epoch in range(no_epochs):
+        epoch_loss = []
+        epoch_error = []
+        epoch_topo = []
 
-        error = criterion(model_outputs, hr)
+        model.train()
+        for lr, hr in train_data_loader:  
+            lr = lr.reshape(160, 160)
+            hr = hr.reshape(268, 268)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            model_outputs,net_outs,start_gcn_outs,layer_outs = model(lr)
+            model_outputs  = unpad(model_outputs, args.padding)
 
-        epoch_loss.append(loss.item())
-        epoch_error.append(error.item())
-        epoch_topo.append(topo.item())
+            padded_hr = pad_HR_adj(hr,args.padding)
+            _, U_hr = torch.linalg.eigh(padded_hr, UPLO='U')
+
+            loss = args.lmbda * criterion(net_outs, start_gcn_outs) + criterion(model.layer.weights,U_hr) + criterion(model_outputs, hr) 
+            topo = compute_topological_MAE_loss(hr, model_outputs)
+            
+            loss += args.lamdba_topo * topo
+
+            error = criterion(model_outputs, hr)
+            
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss.append(loss.item())
+            epoch_error.append(error.item())
+            epoch_topo.append(topo.item())
         
-    print("Loss: ", np.mean(epoch_loss), "Error: ", np.mean(epoch_error),
-        "Topo: ", np.mean(epoch_topo))
+    
+        model.eval()
+        print("Epoch: ",epoch+1, "Loss: ", np.mean(epoch_loss), "Error: ", np.mean(epoch_error),
+            "Topo: ", np.mean(epoch_topo))
+        all_epochs_loss.append(np.mean(epoch_loss))
+        all_epochs_error.append(np.mean(epoch_error))
+        all_epochs_topoloss.append(np.mean(epoch_topo))
 
+
+    df = pd.DataFrame({'Epoch': np.arange(1, no_epochs+1),
+                    'Total Loss': all_epochs_loss,
+                    'Error': all_epochs_error,
+                    'Topological loss': all_epochs_topoloss,
+                    })
+
+    df.to_csv(f'{name}-losses.csv', index=False)
+    pickle.dump(model, open(f"{name}.sav", 'wb'))
+  
     
 def final_validation(model, val_loader, args):
     model.eval()
@@ -134,11 +177,12 @@ def final_validation(model, val_loader, args):
     return mae, pcc, js_dis, avg_mae_bc, avg_mae_ec, avg_mae_pc
 
 
-def validate(model, val_loader, criterion, args):
+def validate(model, val_loader, criterion, args, csv=False, filename=None):
     model.eval()
     val_loss = []
     val_error = []
     val_topo = []
+    preds = []
 
     with torch.no_grad():
         for lr, hr in val_loader:
@@ -147,6 +191,7 @@ def validate(model, val_loader, criterion, args):
 
             model_outputs,net_outs,start_gcn_outs,layer_outs = model(lr)
             model_outputs  = unpad(model_outputs, args.padding)
+            preds.append(MatrixVectorizer.vectorize(model_outputs.detach().numpy()))
 
             padded_hr = pad_HR_adj(hr,args.padding)
             eig_val_hr, U_hr = torch.linalg.eigh(padded_hr, UPLO='U')
@@ -163,6 +208,13 @@ def validate(model, val_loader, criterion, args):
 
     print("Validation Loss: ", np.mean(val_loss), "Validation Error: ", np.mean(val_error),
           "Validation Topo: ", np.mean(val_topo))
+    if csv:
+        r = np.hstack(preds)
+        meltedDF = r.flatten()
+        n = meltedDF.shape[0]
+        df = pd.DataFrame({'ID': np.arange(1, n+1),
+                        'Predicted': meltedDF})
+        df.to_csv(f"{filename}.csv", index=False)
     return np.mean(val_loss)
 
 def hyperparameters():
@@ -244,9 +296,13 @@ def main():
     args = hyperparameters()
     ks = [0.9, 0.7, 0.6, 0.5]
 
-    seed_everything(args.seed)
+    # Set a fixed random seed for reproducibility across multiple libraries
+    random_seed = 42
+    random.seed(random_seed)
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
 
-    kfold = KFold(n_splits=3, random_state=42, shuffle=True)
+    kfold = KFold(n_splits=3, random_state=random_seed, shuffle=True)
     models = [GSRNet(ks, args) for _ in range(kfold.n_splits)]
     optimizers = [optim.Adam(model.parameters(), lr=args.lr) for model in models]
 
@@ -261,8 +317,8 @@ def main():
             model, optimizer = models[fold], optimizers[fold]
 
             # train and validate
-            train(model, train_loader, optimizer, criterion, args)
-            validate(model, val_loader, criterion, args)
+            train(model, train_loader, optimizer, criterion, args, name=f'fold{fold}_model')
+            validate(model, val_loader, criterion, args, csv=True, filename=f'predictions_fold_{fold}')
     
     print(f"Running final evalutation")
     fold_mae = []
