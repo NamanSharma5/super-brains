@@ -1,6 +1,5 @@
 /GSR-Net/data
 /GSR-Net/__pycache__
 /data
-*csv
-*sav
+/models
 venv
