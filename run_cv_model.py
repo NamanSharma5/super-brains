@@ -1,7 +1,9 @@
 #%%
 from typing import Union
 import argparse
+from memory_profiler import profile
 import random
+import time
 
 import torch
 import torch.optim as optim
@@ -174,6 +176,14 @@ def plot_fold_evaluation_colored(fold_mae, fold_pcc, fold_js_dis, fold_avg_mae_b
 
 #%%
 
+
+"""
+To run memory profile run:
+    mprof run --multiprocess run_cv_model.py 
+    mprof plot
+"""
+
+@profile
 def main():
     args = hyperparameters()
     ks = [0.9, 0.7, 0.6, 0.5]
@@ -190,6 +200,7 @@ def main():
 
     criterion = nn.L1Loss()
 
+    start = time.perf_counter()
     for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
         print(f"Working on fold {fold}")
         train_loader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(train_ids))
@@ -201,6 +212,8 @@ def main():
         train(model, train_loader, optimizer, criterion, args, name=f'fold{fold}_model')
         validate(model, val_loader, criterion, args, csv=True, filename=f'predictions_fold_{fold}')
     
+    end = time.perf_counter()
+    print(f'3F-CF runtime is: {round((end-start)/60, 3)} mins')
     print(f"Running final evaluation")
     fold_mae = []
     fold_pcc = []
