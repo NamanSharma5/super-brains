@@ -24,7 +24,7 @@ from test import *
 
 
 #%%
-def train(fabric, model, train_loader, optimizer, criterion, args):
+def train(model, train_loader, optimizer, criterion, args):
     model.train()
 
     epoch_loss = []
@@ -48,7 +48,7 @@ def train(fabric, model, train_loader, optimizer, criterion, args):
         error = criterion(model_outputs, hr)
 
         optimizer.zero_grad()
-        fabric.backward(loss)
+        loss.backward()
         optimizer.step()
 
         epoch_loss.append(loss.item())
@@ -134,7 +134,7 @@ def final_validation(model, val_loader, args):
     return mae, pcc, js_dis, avg_mae_bc, avg_mae_ec, avg_mae_pc
 
 
-def validate(fabric, model, val_loader, criterion, args):
+def validate(model, val_loader, criterion, args):
     model.eval()
     val_loss = []
     val_error = []
@@ -241,11 +241,7 @@ def plot_fold_evaluation_colored(fold_mae, fold_pcc, fold_js_dis, fold_avg_mae_b
 #%%
 
 def main():
-    fabric = Fabric(accelerator='cpu')
-
-    fabric.launch()
     args = hyperparameters()
-    args.device = fabric.device
     ks = [0.9, 0.7, 0.6, 0.5]
 
     seed_everything(args.seed)
@@ -253,25 +249,20 @@ def main():
     kfold = KFold(n_splits=3, random_state=42, shuffle=True)
     models = [GSRNet(ks, args) for _ in range(kfold.n_splits)]
     optimizers = [optim.Adam(model.parameters(), lr=args.lr) for model in models]
-    for i in range(kfold.n_splits):
-        models[i], optimizers[i] = fabric.setup(models[i], optimizers[i])
 
     criterion = nn.L1Loss()
 
-    for epoch in range(args.epochs):
-        for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
-            print(f"Working on fold {fold}")
-
-            train_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(train_ids))
-            val_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
-
-            train_loader, val_loader = fabric.setup_dataloaders(train_dataloader, val_dataloader)
+    for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
+        print(f"Working on fold {fold}")
+        for epoch in range(args.epochs):
+            train_loader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(train_ids))
+            val_loader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
 
             model, optimizer = models[fold], optimizers[fold]
 
             # train and validate
-            train(fabric, model, train_loader, optimizer, criterion, args)
-            validate(fabric, model, val_loader, criterion, args)
+            train(model, train_loader, optimizer, criterion, args)
+            validate(model, val_loader, criterion, args)
     
     print(f"Running final evalutation")
     fold_mae = []
@@ -281,8 +272,7 @@ def main():
     fold_avg_mae_ec = []
     fold_avg_mae_pc = []
     for fold, (train_ids, val_ids) in enumerate(kfold.split(brain_dataset)):
-        val_dataloader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
-        val_loader = fabric.setup_dataloaders(val_dataloader)
+        val_loader = DataLoader(brain_dataset, batch_size=1, sampler=SubsetRandomSampler(val_ids))
         model = models[fold]
 
         mae, pcc, js_dis, avg_mae_bc, avg_mae_ec, avg_mae_pc = final_validation(model, val_loader, args)
