@@ -50,14 +50,14 @@ class GraphConvolution(nn.Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
     #160x320 320x320 =  160x320
-    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu):
+    def __init__(self, in_features, out_features, dropout=0.3, act=F.prelu): # changed to prelu 
         super(GraphConvolution, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.dropout = dropout
         self.act = act
-        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
-        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features))
+        self.weight_self = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)) # added extra learnable params to determine self embedding
+        self.weight_ne = torch.nn.Parameter(torch.FloatTensor(in_features, out_features)) 
         self.reset_parameters()
 
     def reset_parameters(self):

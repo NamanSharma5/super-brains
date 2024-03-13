@@ -20,7 +20,7 @@ class GSRNet(nn.Module):
     self.gc2 = GraphConvolution(self.hidden_dim, self.hr_dim, dropout=args.p, act=F.relu)
 
   def forward(self,lr):
-    I = normalize_adj_torch(lr).type(torch.FloatTensor)  # LR node embeddings  
+    I = normalize_adj_torch(lr).type(torch.FloatTensor)  # LR node embeddings set to be the same as our adjacency matrix (rationale explained in report)
     A = normalize_adj_torch(lr).type(torch.FloatTensor)
 
     # net_outs = learnt LR node embeddings , start_gcn_outs = embeddings of U-net after donwsampling
