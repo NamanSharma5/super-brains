@@ -25,7 +25,8 @@ The generative GNN model builds off GSR-NET[1] but incorporates various key chan
 
 ## Used External Libraries
 
-Please create a venv from the requirements.txt and run the `run_final_model.ipynb` to see the trained model we submitted to Kaggle
+Please create a venv from the requirements.txt and run the `run_final_model.ipynb` to see the trained model we submitted to Kaggle.
+To see the bar plots run `run_cv_model.py`.
 
 ## Results
 
