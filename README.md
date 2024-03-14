@@ -15,9 +15,10 @@ Filippo Varini
 
 The key objective of this Kaggle competition was to perform graph super-resolution by increasing the number of nodes in an input brain connectivity graph and producing an updated brain connectivity matrix. We understood the importance of this task from a medical imaging perspective where scanners may have varying resolutions and high demand/backlog for scanners preventing technicians from taking slow, high-resolution scans. Hence by collating a dataset of low and high-resolution brain graphs per patient, we can mitigate these issues by building graph-based models to perform super-resolution. The key research question was to determine how well and through what approach can super-resolution be best achieved. 
 
-## Name of your model - Methodology
+## GraphITE - Methodology
 
-The generative GNN model builds off GSR-NET[1] but incorporates various key changes (motivated in our report and presentation): data augmentation by injecting Gaussian noise with a specified hyperparameter for noise variance, improved aggregation through separate self-connections (i.e. an extra set of learnable params - see below equation), a topological loss function computed as the mean absolute error between node degrees, and the initialization of the feature matrix with a noisy adjacency matrix while avoiding the use of identity or manual feature matrices.
+Our GraphITE (Graph Imaging
+Technology for Encephalograph) model builds off GSR-NET[1] but incorporates various key changes (motivated in our report and presentation): data augmentation by injecting Gaussian noise with a specified hyperparameter for noise variance, improved aggregation through separate self-connections (i.e. an extra set of learnable params - see below equation), a topological loss function computed as the mean absolute error between node degrees, and the initialization of the feature matrix with a noisy adjacency matrix while avoiding the use of identity or manual feature matrices.
 
 ![Alt text](img/data%20augmentation.png)
 ![Alt text](img/updated%20aggregation.png)
