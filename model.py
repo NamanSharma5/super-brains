@@ -6,6 +6,8 @@ from layers import *
 from preprocessing import normalize_adj_torch
 from topological import *
 
+""" Adapted from github.com/basiralab/GSR-Net"""
+
 class GSRNet(nn.Module):
 
   def __init__(self,ks,args):

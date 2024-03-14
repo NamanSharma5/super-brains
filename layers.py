@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from preprocessing import normalize_adj_torch
 
+""" Adapted from github.com/basiralab/GSR-Net"""
 
 def weight_variable_glorot(output_dim):
 
