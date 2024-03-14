@@ -42,6 +42,7 @@ The required predictions CSV can be found under submission-csvs, in files `predi
 ![Alt text](img/all_plots.png)
 ![Alt text](img/avg_plots.png)
 ![Alt text](img/mae_plots.png)
+![Alt text](img/model_losses_epochs.png)
 
 
 ## References
