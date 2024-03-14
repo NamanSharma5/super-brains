@@ -30,10 +30,10 @@ Please create a venv from the `requirements.txt` and run the `run_final_model.ip
 To see the 3F-CF and the produced topological measures bar plots, run `run_cv_model.py`.
 
 To run the memory profiler run:
-"""
+```
     mprof run --multiprocess run_cv_model.py 
     mprof plot
-"""
+```
 
 
 ## Results
