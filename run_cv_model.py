@@ -170,7 +170,8 @@ def plot_fold_evaluation_colored(fold_mae, fold_pcc, fold_js_dis, fold_avg_mae_b
         ax.set_ylabel('Scores')
         ax.set_xticklabels(metrics, rotation=45, ha="right")
     
-    # Show the plot
+    # Save and show the plot
+    plt.savefig('topo-plots.png')
     plt.show()
 
 
