@@ -26,8 +26,8 @@ Technology for Encephalograph) model builds off GSR-NET[1] but incorporates vari
 
 ## Used External Libraries
 
-Please create a venv from the requirements.txt and run the `run_final_model.ipynb` to see the trained model we submitted to Kaggle.
-To see the bar plots run `run_cv_model.py`.
+Please create a venv from the `requirements.txt` and run the `run_final_model.ipynb` to see the trained model we submitted to Kaggle.
+To see the 3F-CF and the produced topological measures bar plots, run `run_cv_model.py`.
 
 To run the memory profiler run:
 """
