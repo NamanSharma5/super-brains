@@ -34,7 +34,8 @@ To run the memory profiler run:
     mprof run --multiprocess run_cv_model.py 
     mprof plot
 ```
-
+## Predictions CSV
+The required predictions CSV can be found under submission-csvs, in files `predictions_fold_{fold_num}.csv` where `fold_num` takes values 0 to 2. We also submitted the pickled trained cross validation models in `fold{fold_num}_model.sav` and the final Kaggle submission model under `final-model.sav`. You can load them using `pickle.load({model_name})`.
 
 ## Results
 
